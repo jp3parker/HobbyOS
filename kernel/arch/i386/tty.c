@@ -33,23 +33,23 @@ void terminal_setcolor(uint8_t color) {
 	terminal_color = color;
 }
 
-void terminal_scrolldown()
-{
-  size_t y = 0; // current row being overwritten
+void terminal_scrolldown() {
+	
+	size_t y = 0; // current row being overwritten
 
-  // scroll all terminal characters up 1 line - will discard first line data
-  for (; y < VGA_HEIGHT - 1; y++) {
+	// scroll all terminal characters up 1 line - will discard first line data
+  	for (; y < VGA_HEIGHT - 1; y++) {
 		for (size_t x = 0; x < VGA_WIDTH; x++) {
       		const size_t new_index = y * VGA_WIDTH + x;
 			terminal_buffer[new_index] = vga_entry(terminal_buffer[new_index + VGA_WIDTH], terminal_color);
 		}
 	}
  
-  // fill last line up with spaces
-  for (size_t x = 0; x < VGA_WIDTH; x++) {
-    const size_t index = y * VGA_WIDTH + x;
-    terminal_buffer[index] = vga_entry(' ', terminal_color);
-  }
+  	// fill last line up with spaces
+  	for (size_t x = 0; x < VGA_WIDTH; x++) {
+    	const size_t index = y * VGA_WIDTH + x;
+    	terminal_buffer[index] = vga_entry(' ', terminal_color);
+  	}
   
 }
 
