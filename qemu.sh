@@ -8,4 +8,4 @@ log_message "$LOG_STEP" "Validating bootable image dependencies..."
 ARCH=$(./target-triplet-to-arch.sh $HOST)
 
 log_message "$LOG_STEP" "Launching QEMU Emulator ($ARCH)..."
-qemu-system-$(./target-triplet-to-arch.sh $HOST) -cdrom myos.iso
+qemu-system-$(./target-triplet-to-arch.sh $HOST) -cdrom myos.iso -display cocoa,zoom-to-fit=on
