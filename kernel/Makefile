@@ -1,6 +1,14 @@
-DEFAULT_HOST!=../default-host.sh
-HOST?=DEFAULT_HOST
-HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
+
+DEFAULT_HOST := $(shell ../default-host.sh)
+
+# If HOST is empty, or looks like a Mac '.local' hostname, overwrite it
+ifeq ($(findstring .local,$(HOST)),.local)
+  HOST=$(DEFAULT_HOST)
+else ifeq ($(strip $(HOST)),)
+  HOST=$(DEFAULT_HOST)
+endif
+
+HOSTARCH := $(shell ../target-triplet-to-arch.sh $(HOST))
 
 CFLAGS?=-O2 -g
 CPPFLAGS?=
@@ -74,7 +82,7 @@ install: install-headers install-kernel
 
 install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	cp -Rp include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 install-kernel: myos.kernel
 	mkdir -p $(DESTDIR)$(BOOTDIR)

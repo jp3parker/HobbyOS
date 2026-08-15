@@ -1,6 +1,14 @@
-DEFAULT_HOST!=../default-host.sh
-HOST?=DEFAULT_HOST
-HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
+
+DEFAULT_HOST := $(shell ../default-host.sh)
+
+# If HOST is empty, or looks like a Mac '.local' hostname, overwrite it
+ifeq ($(findstring .local,$(HOST)),.local)
+  HOST=$(DEFAULT_HOST)
+else ifeq ($(strip $(HOST)),)
+  HOST=$(DEFAULT_HOST)
+endif
+
+HOSTARCH := $(shell ../target-triplet-to-arch.sh $(HOST))
 
 CFLAGS?=-O2 -g
 CPPFLAGS?=
@@ -20,7 +28,7 @@ LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
 
 ARCHDIR=arch/$(HOSTARCH)
 
-include $(ARCHDIR)/make.config
+#include $(ARCHDIR)/make.config
 
 CFLAGS:=$(CFLAGS) $(ARCH_CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) $(ARCH_CPPFLAGS)
@@ -83,11 +91,24 @@ install: install-headers install-libs
 
 install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	cp -Rp include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 install-libs: $(BINARIES)
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp $(BINARIES) $(DESTDIR)$(LIBDIR)
+
+test:
+	@echo "--- Makefile Variables ---"
+	@echo "DEFAULT_HOST value: '$(DEFAULT_HOST)'"
+	@echo "HOST value: '$(HOST)'"
+	@echo "HOSTARCH value: '$(HOSTARCH)'"
+	@echo "--- Live Script Execution ---"
+	@echo "Running default-host.sh directly:"
+	../default-host.sh
+	@echo "Running target-triplet-to-arch.sh with '$(HOST)':"
+	../target-triplet-to-arch.sh $(HOST)
+
+
 
 -include $(OBJS:.o=.d)
 -include $(LIBK_OBJS:.o=.d)

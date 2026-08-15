@@ -26,3 +26,17 @@ export CC="$CC --sysroot=$SYSROOT"
 if echo "$HOST" | grep -Eq -- '-elf($|-)'; then
   export CC="$CC -isystem=$INCLUDEDIR"
 fi
+
+# ANSI Color Codes for clean output
+export LOG_INFO="\033[1;34m[INFO]\033[0m"
+export LOG_STEP="\033[1;32m[STEP]\033[0m"
+export LOG_ERR="\033[1;31m[ERROR]\033[0m"
+export LOG_TIME="\033[1;30m"
+export RESET="\033[0m"
+
+# Helper function to timestamp events
+log_message() {
+    LEVEL=$1
+    MESSAGE=$2
+    echo "${LOG_TIME}$(date +%H:%M:%S)${RESET} ${LEVEL} ${MESSAGE}"
+}
