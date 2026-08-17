@@ -57,7 +57,7 @@ void keyboard_poll_loop(void) {
                 char c = 0;
                 
                 // Pick the correct table based on our tracked state
-                if (shift_pressed | caps_lock_enabled) {
+                if (shift_pressed ^ caps_lock_enabled) {
                     c = keyboard_map_shifted[clean_scancode];
                 } else {
                     c = keyboard_map[clean_scancode];
