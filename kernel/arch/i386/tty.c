@@ -6,6 +6,7 @@
 #include <kernel/tty.h>
 
 #include "vga.h"
+#include "io.h"
 
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
@@ -37,7 +38,7 @@ void terminal_scrolldown() {
 	
 	size_t y = 0; // current row being overwritten
 
-	// scroll all terminal characters up 1 line - will discard first line data
+	// scroll all terminal characters up 1 line - will just discard first line data
   	for (; y < VGA_HEIGHT - 1; y++) {
 		for (size_t x = 0; x < VGA_WIDTH; x++) {
       		const size_t new_index = y * VGA_WIDTH + x;
@@ -51,6 +52,16 @@ void terminal_scrolldown() {
     	terminal_buffer[index] = vga_entry(' ', terminal_color);
   	}
   
+}
+
+void terminal_move_cursor(size_t x, size_t y) {
+    uint16_t pos = y * 80 + x;
+
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (uint8_t)(pos & 0xFF));
+
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
 }
 
 void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
@@ -68,6 +79,7 @@ void terminal_putchar(char c) {
 			--terminal_row;
 		}
 	}
+	terminal_move_cursor(terminal_column, terminal_row);
 }
 
 void terminal_write(const char* data, size_t size) {
