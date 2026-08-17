@@ -4,8 +4,11 @@
 #include <stdbool.h>
 #include "io.h"
 
-// Global state variables to track if shift is held down
+// Global state variable to track if shift is held down
 static bool shift_pressed = false;
+
+// Global state variable to track caps lock status
+static bool caps_lock_enabled = false;
 
 // Table 1: Standard lowercase mapping (Scan Code Set 1)
 static const char keyboard_map[] = {
@@ -44,15 +47,17 @@ void keyboard_poll_loop(void) {
                 } else {
                     shift_pressed = true;  // User is holding down Shift
                 }
-                continue; // Skip printing anything for the shift key itself
             }
-
-            // Step 3: Print characters (Only on PRESS event, ignore releases)
-            if (!is_break) {
+            else if (clean_scancode == 0x3A) {   // Caps Lock
+                if (!is_break) {
+                    caps_lock_enabled = !caps_lock_enabled;
+                }
+            }
+            else if (!is_break) {
                 char c = 0;
                 
                 // Pick the correct table based on our tracked state
-                if (shift_pressed) {
+                if (shift_pressed | caps_lock_enabled) {
                     c = keyboard_map_shifted[clean_scancode];
                 } else {
                     c = keyboard_map[clean_scancode];
