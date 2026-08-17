@@ -54,6 +54,7 @@ void terminal_scrolldown() {
   
 }
 
+
 void terminal_move_cursor(size_t x, size_t y) {
     uint16_t pos = y * 80 + x;
 
@@ -69,9 +70,35 @@ void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
 	terminal_buffer[index] = vga_entry(c, color);
 }
 
+// TO DO: fix escape, caps lock, down key
 void terminal_putchar(char c) {
 	unsigned char uc = c;
-	terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
+
+	if (c == '\b') { // backspace
+		if (terminal_column == 0) {
+			terminal_column = 80;
+			if (terminal_row > 0) {
+				--terminal_row;
+			}
+		}
+		else {
+			--terminal_column;
+		}
+		terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+		terminal_move_cursor(terminal_column, terminal_row);
+		return;
+	}
+	else if (c == '\t') { // tab = 4 spaces
+		terminal_putchar(' ');
+		terminal_putchar(' ');
+		terminal_putchar(' ');
+		terminal_putchar(' ');
+		return;
+	}
+	else if (c != '\n') {
+		terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
+	}
+
 	if (++terminal_column == VGA_WIDTH || c == '\n') {
 		terminal_column = 0;
 		if (++terminal_row == VGA_HEIGHT) {
@@ -80,6 +107,7 @@ void terminal_putchar(char c) {
 		}
 	}
 	terminal_move_cursor(terminal_column, terminal_row);
+
 }
 
 void terminal_write(const char* data, size_t size) {
