@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-// This function will sit in an infinite loop, reading keys and printing them
-void keyboard_poll_loop(void);
+void keyboard_handle_irq(void);
 
 #endif

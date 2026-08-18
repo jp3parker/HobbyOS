@@ -61,6 +61,23 @@ int printf(const char* restrict format, ...) {
 			if (!print(str, len))
 				return -1;
 			written += len;
+		} else if (*format == 'u') {
+			format++;
+			unsigned int value = va_arg(parameters, unsigned int);
+			char buffer[10];
+			size_t i = 0;
+
+			do {
+				buffer[i++] = (char)('0' + (value % 10));
+				value /= 10;
+			} while (value != 0);
+
+			while (i > 0) {
+				if (putchar(buffer[--i]) == EOF) {
+					return -1;
+				}
+				written++;
+			}
 		} else {
 			format = format_begun_at;
 			size_t len = strlen(format);
