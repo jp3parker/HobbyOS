@@ -18,16 +18,10 @@ static uint8_t terminal_color;
 static uint16_t* terminal_buffer;
 
 void terminal_initialize(void) {
-	terminal_row = 0;
-	terminal_column = 0;
 	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 	terminal_buffer = VGA_MEMORY;
-	for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		for (size_t x = 0; x < VGA_WIDTH; x++) {
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
-	}
+	terminal_clear();
+	terminal_move_to_start();
 }
 
 void terminal_setcolor(uint8_t color) {
@@ -36,7 +30,7 @@ void terminal_setcolor(uint8_t color) {
 
 void terminal_scrolldown() {
 	
-	size_t y = 0; // current row being overwritten
+	size_t y = 0; // current row being overwritten/lost
 
 	// scroll all terminal characters up 1 line - will just discard first line data
   	for (; y < VGA_HEIGHT - 1; y++) {
@@ -54,6 +48,14 @@ void terminal_scrolldown() {
   
 }
 
+void terminal_clear() {
+	for (size_t y = 0; y < VGA_HEIGHT; y++) {
+		for (size_t x = 0; x < VGA_WIDTH; x++) {
+			const size_t index = y * VGA_WIDTH + x;
+			terminal_buffer[index] = vga_entry(' ', terminal_color);
+		}
+	}
+}
 
 void terminal_move_cursor(size_t x, size_t y) {
     uint16_t pos = y * 80 + x;
@@ -63,6 +65,12 @@ void terminal_move_cursor(size_t x, size_t y) {
 
     outb(0x3D4, 0x0E);
     outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
+}
+
+void terminal_move_to_start() {
+	terminal_row = 0;
+	terminal_column = 0;
+	terminal_move_cursor(terminal_row, terminal_column);
 }
 
 void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
