@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <kernel/tty.h>
+#include <kernel/timer.h>
 #include <kernel/keyboard.h>
 #include <stdio.h>
 #include "pic.h"
@@ -20,6 +21,10 @@ void isr_handler(struct register_frame* r) {
 }
 
 void irq_handler(struct register_frame* r) {
+
+    if (r->int_no == 32) {
+        timer_handle_irq();
+    }
 
     if (r->int_no == 33) {
         keyboard_handle_irq();

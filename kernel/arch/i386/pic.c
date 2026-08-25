@@ -28,10 +28,10 @@ void pic_remap(int offset1, int offset2) {
     outb(PIC2_DATA, 0x01);
 
     /*
-     * Unmask IRQ1 on the master PIC for keyboard input.
+     * Unmask IRQ0 for the timer and IRQ1 for keyboard input.
      * 0 = enabled, 1 = masked.
      */
-    a1 &= ~(1 << 1);
+    a1 &= ~((1 << 0) | (1 << 1));
 
     outb(PIC1_DATA, a1);
     outb(PIC2_DATA, a2);
