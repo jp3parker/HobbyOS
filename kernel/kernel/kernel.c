@@ -1,5 +1,6 @@
 #include <kernel/tty.h>
 #include <kernel/timer.h>
+#include <math.h>
 #include <../arch/i386/gdt.h> // TODO: make this kernel_main file arch independent
 #include <../arch/i386/idt.h>
 #include <../arch/i386/vga.h>
@@ -11,53 +12,6 @@ static inline void enable_interrupts(void) {
 }
 
 void donut_code(void);
-
-static float wrap_angle(float x) {
-    const float tau = 6.28318530717958647692f;
-
-    while (x >= tau) {
-        x -= tau;
-    }
-
-    while (x < 0.0f) {
-        x += tau;
-    }
-
-    return x;
-}
-
-static float approx_sinf(float x) {
-    const float pi = 3.14159265358979323846f;
-    const float half_pi = 1.57079632679489661923f;
-    const float tau = 6.28318530717958647692f;
-
-    x = wrap_angle(x);
-    if (x > pi) {
-        x -= tau;
-    }
-
-    float sign = 1.0f;
-    if (x < 0.0f) {
-        sign = -1.0f;
-        x = -x;
-    }
-
-    if (x > half_pi) {
-        x = pi - x;
-    }
-
-    const float x2 = x * x;
-    const float x3 = x2 * x;
-    const float x5 = x3 * x2;
-    const float x7 = x5 * x2;
-
-    return sign * (x - (x3 / 6.0f) + (x5 / 120.0f) - (x7 / 5040.0f));
-}
-
-static float approx_cosf(float x) {
-    const float half_pi = 1.57079632679489661923f;
-    return approx_sinf(x + half_pi);
-}
 
 enum {
     SCREEN_WIDTH = 80,
@@ -100,20 +54,20 @@ static void render_donut_frame(float A, float B) {
 
     clear_donut_buffers();
 
-    const float sin_a = approx_sinf(A);
-    const float cos_a = approx_cosf(A);
-    const float sin_b = approx_sinf(B);
-    const float cos_b = approx_cosf(B);
+    const float sin_a = sinf(A);
+    const float cos_a = cosf(A);
+    const float sin_b = sinf(B);
+    const float cos_b = cosf(B);
 
     for (float theta = 0.0f; theta < 6.28318530717958647692f; theta += theta_spacing) {
-        const float sin_theta = approx_sinf(theta);
-        const float cos_theta = approx_cosf(theta);
+        const float sin_theta = sinf(theta);
+        const float cos_theta = cosf(theta);
         const float circle_x = r2 + r1 * cos_theta;
         const float circle_y = r1 * sin_theta;
 
         for (float phi = 0.0f; phi < 6.28318530717958647692f; phi += phi_spacing) {
-            const float sin_phi = approx_sinf(phi);
-            const float cos_phi = approx_cosf(phi);
+            const float sin_phi = sinf(phi);
+            const float cos_phi = cosf(phi);
 
             const float x = circle_x * (cos_b * cos_phi + sin_a * sin_b * sin_phi)
                 - circle_y * cos_a * sin_b;

@@ -40,6 +40,7 @@ $(ARCH_FREEOBJS) \
 stdio/printf.o \
 stdio/putchar.o \
 stdio/puts.o \
+math/trig.o \
 unistd/sleep.o \
 stdlib/abort.o \
 string/memcmp.o \
