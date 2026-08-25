@@ -37,6 +37,8 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
+kernel/gfx.o \
+kernel/donut.o \
 kernel/kernel.o \
 
 OBJS=\

@@ -1,6 +1,6 @@
 
+#include <kernel/gfx.h>
 #include <kernel/keyboard.h>
-#include <kernel/tty.h>
 #include <stdbool.h>
 #include "io.h"
 
@@ -60,8 +60,7 @@ void keyboard_handle_irq(void) {
         }
 
         if (c != 0) {
-            terminal_putchar(c);
+            gfx_putc(c);
         }
     }
 }
-
