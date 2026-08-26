@@ -19,6 +19,8 @@ export CPPFLAGS=''
 
 # Configure the cross-compiler to use the desired system root.
 export SYSROOT="$(pwd)/sysroot"
+export ISO_DIR="$(pwd)/isodir"
+export ISO_IMAGE="$(pwd)/myos.iso"
 export CC="$CC --sysroot=$SYSROOT"
 
 # Work around that the -elf gcc targets doesn't have a system include directory
@@ -39,4 +41,14 @@ log_message() {
     LEVEL=$1
     MESSAGE=$2
     echo "${LOG_TIME}$(date +%H:%M:%S)${RESET} ${LEVEL} ${MESSAGE}"
+}
+
+project_make() {
+  PROJECT=$1
+  shift
+
+  (
+    cd "$PROJECT"
+    "$@"
+  )
 }

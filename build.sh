@@ -6,13 +6,10 @@ set -e
 
 for PROJECT in $PROJECTS; do
   log_message "$LOG_INFO" "Building: $PROJECT"
-
-  cd $PROJECT
-  DESTDIR="$SYSROOT" $MAKE install || { 
+  project_make "$PROJECT" env DESTDIR="$SYSROOT" $MAKE install || {
     log_message "$LOG_ERR" "'make install' failed in $PROJECT"
     exit 1
   }
-  cd ..
 done
 
 log_message "$LOG_STEP" "Build process completed."

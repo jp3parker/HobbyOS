@@ -37,9 +37,9 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
-kernel/gfx.o \
-kernel/donut.o \
-kernel/kernel.o \
+src/gfx.o \
+src/donut.o \
+src/kernel.o \
 
 OBJS=\
 $(ARCHDIR)/crti.o \

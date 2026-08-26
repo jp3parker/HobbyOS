@@ -5,7 +5,7 @@
 #include <kernel/gfx.h>
 #include <kernel/tty.h>
 
-#include "../arch/i386/vga.h"
+#include <kernel/vga.h>
 
 static const size_t TEXT_WIDTH = 80;
 static const size_t TEXT_HEIGHT = 25;

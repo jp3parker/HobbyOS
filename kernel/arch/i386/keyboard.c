@@ -2,15 +2,12 @@
 #include <kernel/gfx.h>
 #include <kernel/keyboard.h>
 #include <stdbool.h>
+
 #include "io.h"
 
-// Global state variable to track if shift is held down
 static bool shift_pressed = false;
-
-// Global state variable to track caps lock status
 static bool caps_lock_enabled = false;
 
-// Table 1: Standard lowercase mapping (Scan Code Set 1)
 static const char keyboard_map[] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
   '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
@@ -19,7 +16,6 @@ static const char keyboard_map[] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
 };
 
-// Table 2: Uppercase/Symbol mapping when Shift is active
 static const char keyboard_map_shifted[] = {
     0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
   '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
@@ -30,29 +26,22 @@ static const char keyboard_map_shifted[] = {
 
 void keyboard_handle_irq(void) {
     uint8_t scancode = inb(0x60);
-
-    // Detect if this is a "Make" (Press) or "Break" (Release) code
     bool is_break = (scancode & 0x80);
-
-    // Clean the raw scan code (remove the 0x80 bit if it's a break code)
     uint8_t clean_scancode = scancode & 0x7F;
 
-    // Handle Shift State changes
-    // Scan code 0x2A is Left Shift, 0x36 is Right Shift
     if (clean_scancode == 0x2A || clean_scancode == 0x36) {
         if (is_break) {
-            shift_pressed = false; // User let go of Shift
+            shift_pressed = false;
         } else {
-            shift_pressed = true;  // User is holding down Shift
+            shift_pressed = true;
         }
-    } else if (clean_scancode == 0x3A) {  // Caps Lock
+    } else if (clean_scancode == 0x3A) {
         if (!is_break) {
             caps_lock_enabled = !caps_lock_enabled;
         }
     } else if (!is_break) {
         char c = 0;
-                
-        // Pick the correct table based on our tracked state
+
         if (shift_pressed ^ caps_lock_enabled) {
             c = keyboard_map_shifted[clean_scancode];
         } else {

@@ -75,10 +75,6 @@ void idt_install(void) {
         idt_set_gate((uint8_t)i, 0, 0, 0);
     }
 
-    /*
-     * 0x08 = kernel code segment selector from your GDT
-     * 0x8E = present, ring 0, 32-bit interrupt gate
-     */
     idt_set_gate(0,  (uint32_t)isr0,  0x08, 0x8E);
     idt_set_gate(1,  (uint32_t)isr1,  0x08, 0x8E);
     idt_set_gate(2,  (uint32_t)isr2,  0x08, 0x8E);
