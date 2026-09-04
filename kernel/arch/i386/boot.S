@@ -1,7 +1,8 @@
 # Declare constants for the multiboot header.
 .set ALIGN,    1<<0             # align loaded modules on page boundaries
 .set MEMINFO,  1<<1             # provide memory map
-.set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
+.set VIDEO,    1<<2             # request a graphics framebuffer
+.set FLAGS,    ALIGN | MEMINFO | VIDEO  # this is the Multiboot 'flag' field
 .set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
 
@@ -11,6 +12,15 @@
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
+.long 0                        # header_addr: unused for an ELF kernel
+.long 0                        # load_addr: unused for an ELF kernel
+.long 0                        # load_end_addr: unused for an ELF kernel
+.long 0                        # bss_end_addr: unused for an ELF kernel
+.long 0                        # entry_addr: unused for an ELF kernel
+.long 0                        # framebuffer mode type: linear graphics
+.long 1024                     # requested framebuffer width
+.long 768                      # requested framebuffer height
+.long 32                       # requested framebuffer depth
 
 # Reserve a stack for the initial thread.
 .section .bss
@@ -29,8 +39,11 @@ _start:
 	# Call the global constructors.
 	call _init
 
-	# Transfer control to the main kernel.
+	# Transfer control to the main kernel with the Multiboot handoff.
+	pushl %ebx
+	pushl %eax
 	call kernel_main
+	addl $8, %esp
 
 	# Hang if kernel_main unexpectedly returns.
 	cli

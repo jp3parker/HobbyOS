@@ -10,6 +10,7 @@ mkdir -p "$ISO_DIR/boot/grub"
 
 cp "$SYSROOT/boot/myos.kernel" "$ISO_DIR/boot/myos.kernel" || { log_message "$LOG_ERR" "Could not find myos.kernel in sysroot."; exit 1; }
 cat > "$ISO_DIR/boot/grub/grub.cfg" << EOF
+
 menuentry "myos" {
 	multiboot /boot/myos.kernel
 }
