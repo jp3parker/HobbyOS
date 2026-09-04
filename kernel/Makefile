@@ -38,6 +38,7 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 src/gfx.o \
+src/renderer.o \
 src/donut.o \
 src/kernel.o \
 

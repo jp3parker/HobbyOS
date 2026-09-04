@@ -32,3 +32,9 @@ void timer_wait(uint32_t ticks) {
         __asm__ volatile ("hlt");
     }
 }
+
+void timer_wait_until(uint32_t deadline) {
+    while ((int32_t)(deadline - timer_ticks()) > 0) {
+        __asm__ volatile ("hlt");
+    }
+}
