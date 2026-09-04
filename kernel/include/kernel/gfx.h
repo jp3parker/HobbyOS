@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/display.h>
+
 enum gfx_color {
 	GFX_COLOR_BLACK = 0,
 	GFX_COLOR_BLUE = 1,
@@ -22,21 +24,6 @@ enum gfx_color {
 	GFX_COLOR_LIGHT_MAGENTA = 13,
 	GFX_COLOR_LIGHT_BROWN = 14,
 	GFX_COLOR_WHITE = 15,
-};
-
-struct gfx_framebuffer {
-	uintptr_t address;
-	uint32_t width;
-	uint32_t height;
-	uint32_t pitch;
-	uint32_t bytes_per_pixel;
-	uint8_t framebuffer_type;
-	uint8_t red_field_position;
-	uint8_t red_mask_size;
-	uint8_t green_field_position;
-	uint8_t green_mask_size;
-	uint8_t blue_field_position;
-	uint8_t blue_mask_size;
 };
 
 void gfx_initialize(void);
