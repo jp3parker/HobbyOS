@@ -3,52 +3,22 @@
 
 #include <math.h>
 #include <kernel/gfx.h>
+#include <kernel/mesh.h>
 #include <kernel/renderer.h>
 
 enum {
 	RENDER_WIDTH = 512,
 	RENDER_HEIGHT = 384,
-	DISPLAY_SCALE = 2,
-	MAJOR_SEGMENTS = 32,
-	MINOR_SEGMENTS = 12,
-	VERTEX_COUNT = MAJOR_SEGMENTS * MINOR_SEGMENTS,
-	TRIANGLE_COUNT = MAJOR_SEGMENTS * MINOR_SEGMENTS * 2,
-	TEXTURE_SIZE = 32
+	DISPLAY_SCALE = 2
 };
 
-struct vertex { float x, y, z, nx, ny, nz, u, v; };
-struct projected_vertex { int x, y; float inv_z, u_over_z, v_over_z, light; };
+struct projected_vertex { int x, y; float inv_z, u_over_z, v_over_z, light_over_z; };
 
-static struct vertex torus_vertices[VERTEX_COUNT];
+static struct projected_vertex projected_vertices[RENDERER_MAX_VERTICES];
 static float depth_buffer[RENDER_WIDTH * RENDER_HEIGHT];
-
-static float sin_fast(float x) {
-	const float pi = 3.14159265358979323846f;
-	const float half_pi = 1.57079632679489661923f;
-	const float tau = 6.28318530717958647692f;
-	while (x > pi) x -= tau;
-	while (x < -pi) x += tau;
-	float sign = 1.0f;
-	if (x < 0.0f) {
-		sign = -1.0f;
-		x = -x;
-	}
-	if (x > half_pi) x = pi - x;
-	const float x2 = x * x;
-	return sign * x * (1.0f - x2 / 6.0f + (x2 * x2) / 120.0f - (x2 * x2 * x2) / 5040.0f);
-}
-
-static float cos_fast(float x) { return sin_fast(x + 1.57079632679489661923f); }
 
 static int edge(int ax, int ay, int bx, int by, int px, int py) {
 	return (px - ax) * (by - ay) - (py - ay) * (bx - ax);
-}
-
-static uint32_t texture_color(int x, int y, float light) {
-	const unsigned int base = (((x / 4) ^ (y / 4)) & 1) ? 210U : 95U;
-	const unsigned int value = (unsigned int)(base * light);
-	const uint8_t channel = (uint8_t)(value > 255U ? 255U : value);
-	return ((uint32_t)channel << 16) | ((uint32_t)(channel * 3U / 4U) << 8) | (uint32_t)(channel / 3U);
 }
 
 static void put_scaled_pixel(int x, int y, uint32_t color) {
@@ -60,7 +30,8 @@ static void put_scaled_pixel(int x, int y, uint32_t color) {
 }
 
 static void rasterize_triangle(const struct projected_vertex* a,
-	const struct projected_vertex* b, const struct projected_vertex* c) {
+	const struct projected_vertex* b, const struct projected_vertex* c,
+	renderer_material_fn material) {
 	const int area = edge(a->x, a->y, b->x, b->y, c->x, c->y);
 	if (area <= 0) return;
 
@@ -92,88 +63,66 @@ static void rasterize_triangle(const struct projected_vertex* a,
 			depth_buffer[index] = inv_z;
 			const float u = (fw0*a->u_over_z + fw1*b->u_over_z + fw2*c->u_over_z) / inv_z;
 			const float v = (fw0*a->v_over_z + fw1*b->v_over_z + fw2*c->v_over_z) / inv_z;
-			int tx = (int)(u * (TEXTURE_SIZE - 1));
-			int ty = (int)(v * (TEXTURE_SIZE - 1));
-			if (tx < 0) tx = 0;
-			if (tx >= TEXTURE_SIZE) tx = TEXTURE_SIZE - 1;
-			if (ty < 0) ty = 0;
-			if (ty >= TEXTURE_SIZE) ty = TEXTURE_SIZE - 1;
-			const float light = (a->light + b->light + c->light) / 3.0f;
-			put_scaled_pixel(x, y, texture_color(tx, ty, light));
+			const float light = (fw0*a->light_over_z + fw1*b->light_over_z + fw2*c->light_over_z) / inv_z;
+			put_scaled_pixel(x, y, material(u, v, light));
 		}
 	}
 }
 
 void renderer_initialize(void) {
-	const float tau = 6.28318530717958647692f;
-	const float major_radius = 1.65f;
-	const float tube_radius = 0.65f;
-
-	for (size_t i = 0; i < VERTEX_COUNT; ++i) {
-		const size_t major = i / MINOR_SEGMENTS;
-		const size_t minor = i % MINOR_SEGMENTS;
-		const float u = (float)major / (float)MAJOR_SEGMENTS;
-		const float v = (float)minor / (float)MINOR_SEGMENTS;
-		const float major_angle = u * tau;
-		const float minor_angle = v * tau;
-		const float major_cos = cos_fast(major_angle);
-		const float major_sin = sin_fast(major_angle);
-		const float minor_cos = cos_fast(minor_angle);
-		const float minor_sin = sin_fast(minor_angle);
-		const float radius = major_radius + tube_radius * minor_cos;
-		torus_vertices[i].x = radius * major_cos;
-		torus_vertices[i].y = tube_radius * minor_sin;
-		torus_vertices[i].z = radius * major_sin;
-		torus_vertices[i].nx = minor_cos * major_cos;
-		torus_vertices[i].ny = minor_sin;
-		torus_vertices[i].nz = minor_cos * major_sin;
-		torus_vertices[i].u = u;
-		torus_vertices[i].v = v;
-	}
-
 	for (size_t i = 0; i < RENDER_WIDTH * RENDER_HEIGHT; ++i) depth_buffer[i] = 0.0f;
 }
 
-void renderer_render(float horizontal_angle, float vertical_angle) {
-	struct projected_vertex projected[VERTEX_COUNT];
-	const float sy = sin_fast(horizontal_angle);
-	const float cy = cos_fast(horizontal_angle);
-	const float sx = sin_fast(vertical_angle);
-	const float cx = cos_fast(vertical_angle);
+void renderer_render_mesh(const struct mesh* mesh,
+	float horizontal_angle, float vertical_angle,
+	renderer_material_fn material) {
+	if (mesh == NULL || material == NULL) return;
+	if (mesh->vertices == NULL || mesh->triangles == NULL) return;
+	if (mesh->vertex_count > RENDERER_MAX_VERTICES) return;
 
-	for (size_t i = 0; i < VERTEX_COUNT; ++i) {
-		const struct vertex* vertex = &torus_vertices[i];
+	const float sy = sinf(horizontal_angle);
+	const float cy = cosf(horizontal_angle);
+	const float sx = sinf(vertical_angle);
+	const float cx = cosf(vertical_angle);
+	const float sz = sinf(horizontal_angle);
+	const float cz = cosf(horizontal_angle);
+
+	for (size_t i = 0; i < mesh->vertex_count; ++i) {
+		const struct mesh_vertex* vertex = &mesh->vertices[i];
 		const float x = vertex->x * cy + vertex->z * sy;
 		const float z_rotated = -vertex->x * sy + vertex->z * cy;
-		const float y = vertex->y * cx - z_rotated * sx;
+		const float y_rotated = vertex->y * cx - z_rotated * sx;
 		const float z = vertex->y * sx + z_rotated * cx + 5.0f;
+		const float y = y_rotated;
+		const float x_rolled = x * cz - y * sz;
+		const float y_rolled = x * sz + y * cz;
 		const float nx = vertex->nx * cy + vertex->nz * sy;
 		const float nz_rotated = -vertex->nx * sy + vertex->nz * cy;
 		const float ny = vertex->ny * cx - nz_rotated * sx;
 		const float nz = vertex->ny * sx + nz_rotated * cx;
 		const float inv_z = 1.0f / z;
 		const float diffuse = nx * -0.45f + ny * 0.65f + nz * -0.62f;
-		projected[i].x = (int)(RENDER_WIDTH * 0.5f + x * 170.0f * inv_z);
-		projected[i].y = (int)(RENDER_HEIGHT * 0.5f - y * 170.0f * inv_z);
-		projected[i].inv_z = inv_z;
-		projected[i].u_over_z = vertex->u * inv_z;
-		projected[i].v_over_z = vertex->v * inv_z;
-		projected[i].light = 0.18f + (diffuse > 0.0f ? diffuse : 0.0f);
+		projected_vertices[i].x = (int)(RENDER_WIDTH * 0.5f + x_rolled * 170.0f * inv_z);
+		projected_vertices[i].y = (int)(RENDER_HEIGHT * 0.5f - y_rolled * 170.0f * inv_z);
+		projected_vertices[i].inv_z = inv_z;
+		projected_vertices[i].u_over_z = vertex->u * inv_z;
+		projected_vertices[i].v_over_z = vertex->v * inv_z;
+		projected_vertices[i].light_over_z = (0.18f + (diffuse > 0.0f ? diffuse : 0.0f)) * inv_z;
 	}
 
 	gfx_clear();
 	for (size_t i = 0; i < RENDER_WIDTH * RENDER_HEIGHT; ++i) depth_buffer[i] = 0.0f;
-	for (size_t major = 0; major < MAJOR_SEGMENTS; ++major) {
-		for (size_t minor = 0; minor < MINOR_SEGMENTS; ++minor) {
-			const size_t next_major = (major + 1) % MAJOR_SEGMENTS;
-			const size_t next_minor = (minor + 1) % MINOR_SEGMENTS;
-			const size_t a = major * MINOR_SEGMENTS + minor;
-			const size_t b = next_major * MINOR_SEGMENTS + minor;
-			const size_t c = next_major * MINOR_SEGMENTS + next_minor;
-			const size_t d = major * MINOR_SEGMENTS + next_minor;
-			rasterize_triangle(&projected[a], &projected[b], &projected[c]);
-			rasterize_triangle(&projected[a], &projected[c], &projected[d]);
+	for (size_t i = 0; i < mesh->triangle_count; ++i) {
+		const struct mesh_triangle* triangle = &mesh->triangles[i];
+		if (triangle->a >= mesh->vertex_count
+			|| triangle->b >= mesh->vertex_count
+			|| triangle->c >= mesh->vertex_count) {
+			continue;
 		}
+		rasterize_triangle(&projected_vertices[triangle->a],
+			&projected_vertices[triangle->b],
+			&projected_vertices[triangle->c],
+			material);
 	}
 	gfx_present();
 }

@@ -15,6 +15,7 @@ void kernel_main(uint32_t multiboot_magic, uintptr_t multiboot_info) {
 
     if (!gfx_has_framebuffer()) {
         terminal_writestring("No framebuffer available, using text mode.\n");
+        return;
     }
 
     donut_demo_run();

@@ -26,6 +26,9 @@ static uint32_t scale_component(uint8_t component, uint8_t mask_size) {
 }
 
 static uint32_t pack_color(uint32_t color) {
+	/* A full-white pixel is format-independent when all stored bits are set. */
+	if ((color & 0xFFFFFFU) == 0xFFFFFFU) return 0xFFFFFFFFU;
+
 	uint32_t packed = 0U;
 	packed |= scale_component((uint8_t)((color >> 16) & 0xFFU), framebuffer.red_mask_size) << framebuffer.red_field_position;
 	packed |= scale_component((uint8_t)((color >> 8) & 0xFFU), framebuffer.green_mask_size) << framebuffer.green_field_position;

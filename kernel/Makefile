@@ -40,6 +40,7 @@ $(KERNEL_ARCH_OBJS) \
 src/gfx.o \
 src/display.o \
 src/renderer.o \
+src/torus.o \
 src/donut.o \
 src/kernel.o \
 

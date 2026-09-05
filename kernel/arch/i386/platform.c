@@ -38,6 +38,19 @@ static bool bind_multiboot_framebuffer(uint32_t multiboot_magic, uintptr_t multi
 	framebuffer.blue_field_position = multiboot_info->framebuffer_blue_field_position;
 	framebuffer.blue_mask_size = multiboot_info->framebuffer_blue_mask_size;
 
+	/* Some boot paths omit RGB masks even though they provide a true-color buffer. */
+	if (framebuffer.bytes_per_pixel >= 3U
+		&& (framebuffer.red_mask_size == 0U
+			|| framebuffer.green_mask_size == 0U
+			|| framebuffer.blue_mask_size == 0U)) {
+		framebuffer.red_field_position = 16U;
+		framebuffer.red_mask_size = 8U;
+		framebuffer.green_field_position = 8U;
+		framebuffer.green_mask_size = 8U;
+		framebuffer.blue_field_position = 0U;
+		framebuffer.blue_mask_size = 8U;
+	}
+
 	return gfx_bind_framebuffer(&framebuffer);
 }
 
