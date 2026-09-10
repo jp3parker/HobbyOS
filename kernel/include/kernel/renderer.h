@@ -13,7 +13,7 @@ typedef uint32_t (*renderer_material_fn)(float u, float v, float light);
 
 void renderer_initialize(void);
 void renderer_render_mesh(const struct mesh* mesh,
-	float horizontal_angle, float vertical_angle,
+	float x_angle, float y_angle, float z_angle,
 	renderer_material_fn material);
 
 #endif

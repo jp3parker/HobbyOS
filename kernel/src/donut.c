@@ -25,14 +25,14 @@ static uint32_t donut_material(float u, float v, float light) {
 }
 
 void donut_demo_run(void) {
-	float horizontal_angle = 0.0f;
-	/* A tilted starting pose makes rotation around the torus' vertical axis visible. */
-	float vertical_angle = 0.65f;
+	float x_angle = 0.65f;
+	float y_angle = 0.0f;
+	float z_angle = 0.0f;
 	uint32_t next_frame = timer_ticks();
 	struct mesh torus;
 	const struct torus_desc torus_desc = {
-		.major_radius = 2.1f,
-		.tube_radius = 1.1f,
+		.major_radius = 1.65f,
+		.tube_radius = 0.65f,
 		.major_segments = TORUS_MAJOR_SEGMENTS,
 		.minor_segments = TORUS_MINOR_SEGMENTS
 	};
@@ -46,9 +46,10 @@ void donut_demo_run(void) {
 
 	renderer_initialize();
 	for (;;) {
-		renderer_render_mesh(&torus, horizontal_angle, vertical_angle, donut_material);
-		horizontal_angle += 0.035f;
-		vertical_angle += 0.012f;
+		renderer_render_mesh(&torus, x_angle, y_angle, z_angle, donut_material);
+		x_angle += 0.012f;
+		y_angle += 0.035f;
+		z_angle += 0.018f;
 		next_frame += 2U;
 		timer_wait_until(next_frame);
 		if ((int32_t)(next_frame - timer_ticks()) < -2) {

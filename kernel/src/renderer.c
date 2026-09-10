@@ -74,36 +74,38 @@ void renderer_initialize(void) {
 }
 
 void renderer_render_mesh(const struct mesh* mesh,
-	float horizontal_angle, float vertical_angle,
+	float x_angle, float y_angle, float z_angle,
 	renderer_material_fn material) {
 	if (mesh == NULL || material == NULL) return;
 	if (mesh->vertices == NULL || mesh->triangles == NULL) return;
 	if (mesh->vertex_count > RENDERER_MAX_VERTICES) return;
 
-	const float sy = sinf(horizontal_angle);
-	const float cy = cosf(horizontal_angle);
-	const float sx = sinf(vertical_angle);
-	const float cx = cosf(vertical_angle);
-	const float sz = sinf(horizontal_angle);
-	const float cz = cosf(horizontal_angle);
+	const float sx = sinf(x_angle);
+	const float cx = cosf(x_angle);
+	const float sy = sinf(y_angle);
+	const float cy = cosf(y_angle);
+	const float sz = sinf(z_angle);
+	const float cz = cosf(z_angle);
 
 	for (size_t i = 0; i < mesh->vertex_count; ++i) {
 		const struct mesh_vertex* vertex = &mesh->vertices[i];
-		const float x = vertex->x * cy + vertex->z * sy;
-		const float z_rotated = -vertex->x * sy + vertex->z * cy;
-		const float y_rotated = vertex->y * cx - z_rotated * sx;
-		const float z = vertex->y * sx + z_rotated * cx + 5.0f;
-		const float y = y_rotated;
-		const float x_rolled = x * cz - y * sz;
-		const float y_rolled = x * sz + y * cz;
-		const float nx = vertex->nx * cy + vertex->nz * sy;
-		const float nz_rotated = -vertex->nx * sy + vertex->nz * cy;
-		const float ny = vertex->ny * cx - nz_rotated * sx;
-		const float nz = vertex->ny * sx + nz_rotated * cx;
+		const float xy = vertex->x * cy + vertex->z * sy;
+		const float zy = -vertex->x * sy + vertex->z * cy;
+		const float yx = vertex->y * cx - zy * sx;
+		const float zx = vertex->y * sx + zy * cx;
+		const float x = xy * cz - yx * sz;
+		const float y = xy * sz + yx * cz;
+		const float z = zx + 5.0f;
+		const float nxy = vertex->nx * cy + vertex->nz * sy;
+		const float nzy = -vertex->nx * sy + vertex->nz * cy;
+		const float nyx = vertex->ny * cx - nzy * sx;
+		const float nz = vertex->ny * sx + nzy * cx;
+		const float nx = nxy * cz - nyx * sz;
+		const float ny = nxy * sz + nyx * cz;
 		const float inv_z = 1.0f / z;
 		const float diffuse = nx * -0.45f + ny * 0.65f + nz * -0.62f;
-		projected_vertices[i].x = (int)(RENDER_WIDTH * 0.5f + x_rolled * 170.0f * inv_z);
-		projected_vertices[i].y = (int)(RENDER_HEIGHT * 0.5f - y_rolled * 170.0f * inv_z);
+		projected_vertices[i].x = (int)(RENDER_WIDTH * 0.5f + x * 170.0f * inv_z);
+		projected_vertices[i].y = (int)(RENDER_HEIGHT * 0.5f - y * 170.0f * inv_z);
 		projected_vertices[i].inv_z = inv_z;
 		projected_vertices[i].u_over_z = vertex->u * inv_z;
 		projected_vertices[i].v_over_z = vertex->v * inv_z;
